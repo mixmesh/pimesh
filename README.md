@@ -72,24 +72,24 @@ May be some kind of watch dog could try to turn the led OFF.
 
 First part (used part) of the pin header
 
-3x3 Power   1   2  5v Power
-SDA         3   4  5v Power
-SCL         5   6  GND
-GPIO4(CLK)  7   8  GPIO 14 (Tx)
-GND         9  10  GPIO 15 (Rx)
-GPIO 17    11  12  GPIO 18 (PCM CLK)
-GPIO 27    13  14  GND
--          15  16  -
-3x3 Power  17  18  -
+    3x3 Power   1   2  5v Power
+    SDA         3   4  5v Power
+    SCL         5   6  GND
+    GPIO4(CLK)  7   8  GPIO 14 (Tx)
+    GND         9  10  GPIO 15 (Rx)
+    GPIO 17    11  12  GPIO 18 (PCM CLK)
+    GPIO 27    13  14  GND
+    -          15  16  -
+    3x3 Power  17  18  -
 
 The TCA Lab card colors (temporary)
 
-1  RED    (3.3v)  TCA
-3  YELLOW (I2C SDA)
-5  GRAY   (I2C SCL)
-7  -
-9  GND             10 - RX  (GPS module)
-11 BROWN  (INT)
-13 WHITE  (RESET)
-15
-17 RED    (3.3v) GPS-module
+    1  RED    (3.3v)  TCA
+    3  YELLOW (I2C SDA)
+    5  GRAY   (I2C SCL)
+    7  -
+    9  GND             10 - RX  (GPS module)
+    11 BROWN  (INT)
+    13 WHITE  (RESET)
+    15
+    17 RED    (3.3v) GPS-module
