@@ -6,4 +6,4 @@
   {registered, [pimesh_key_serv, pimesh_battery_serv, pimesh_app_serv, 
 		pimesh_gps_serv]},
   {mod, {pimesh_app, []}},
-  {applications, [kernel, stdlib]}]}.
+  {applications, [kernel, stdlib, i2c, uart]}]}.
