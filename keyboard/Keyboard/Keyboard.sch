@@ -5,8 +5,8 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 1
 Title "MixMesh keyboard"
-Date "2020-12-14"
-Rev "1.0"
+Date "2020-12-17"
+Rev "1.1"
 Comp "MixMesh"
 Comment1 ""
 Comment2 ""
@@ -18,7 +18,7 @@ L Keyboard:TCA8418 U1
 U 1 1 5FC7081E
 P 4250 3450
 F 0 "U1" H 4275 5215 50  0000 C CNN
-F 1 "TCA8418" H 4275 5124 50  0000 C CNN
+F 1 "TCA8418RTWR" H 4275 5124 50  0000 C CNN
 F 2 "" H 1300 2550 50  0001 C CNN
 F 3 "" H 1300 2550 50  0001 C CNN
 	1    4250 3450
@@ -80,10 +80,10 @@ F 3 "http://www.apem.com/int/index.php?controller=attachment&id_attachment=1371"
 	1    0    0    -1  
 $EndComp
 $Comp
-L Switch:SW_MEC_5E SW7
+L Switch:SW_MEC_5E SW6
 U 1 1 5FC76FF5
 P 8450 4050
-F 0 "SW7" H 8450 4435 50  0000 C CNN
+F 0 "SW6" H 8450 4435 50  0000 C CNN
 F 1 "6" H 8450 4344 50  0000 C CNN
 F 2 "" H 8450 4350 50  0001 C CNN
 F 3 "http://www.apem.com/int/index.php?controller=attachment&id_attachment=1371" H 8450 4350 50  0001 C CNN
@@ -91,66 +91,66 @@ F 3 "http://www.apem.com/int/index.php?controller=attachment&id_attachment=1371"
 	1    0    0    -1  
 $EndComp
 $Comp
-L Switch:SW_MEC_5E SW?
+L Switch:SW_MEC_5E SW7
 U 1 1 5FC778BD
 P 6550 4550
-F 0 "SW?" H 6550 4935 50  0000 C CNN
-F 1 "SW_7" H 6550 4844 50  0000 C CNN
+F 0 "SW7" H 6550 4935 50  0000 C CNN
+F 1 "7" H 6550 4844 50  0000 C CNN
 F 2 "" H 6550 4850 50  0001 C CNN
 F 3 "http://www.apem.com/int/index.php?controller=attachment&id_attachment=1371" H 6550 4850 50  0001 C CNN
 	1    6550 4550
 	1    0    0    -1  
 $EndComp
 $Comp
-L Switch:SW_MEC_5E SW?
+L Switch:SW_MEC_5E SW8
 U 1 1 5FC7801D
 P 7550 4550
-F 0 "SW?" H 7550 4935 50  0000 C CNN
-F 1 "SW_8" H 7550 4844 50  0000 C CNN
+F 0 "SW8" H 7550 4935 50  0000 C CNN
+F 1 "8" H 7550 4844 50  0000 C CNN
 F 2 "" H 7550 4850 50  0001 C CNN
 F 3 "http://www.apem.com/int/index.php?controller=attachment&id_attachment=1371" H 7550 4850 50  0001 C CNN
 	1    7550 4550
 	1    0    0    -1  
 $EndComp
 $Comp
-L Switch:SW_MEC_5E SW?
+L Switch:SW_MEC_5E SW9
 U 1 1 5FC78EF4
 P 8450 4550
-F 0 "SW?" H 8450 4935 50  0000 C CNN
-F 1 "SW_9" H 8450 4844 50  0000 C CNN
+F 0 "SW9" H 8450 4935 50  0000 C CNN
+F 1 "9" H 8450 4844 50  0000 C CNN
 F 2 "" H 8450 4850 50  0001 C CNN
 F 3 "http://www.apem.com/int/index.php?controller=attachment&id_attachment=1371" H 8450 4850 50  0001 C CNN
 	1    8450 4550
 	1    0    0    -1  
 $EndComp
 $Comp
-L Switch:SW_MEC_5E SW?
+L Switch:SW_MEC_5E SW10
 U 1 1 5FC79FBB
 P 6550 5050
-F 0 "SW?" H 6550 5435 50  0000 C CNN
-F 1 "SW_STAT" H 6550 5344 50  0000 C CNN
+F 0 "SW10" H 6550 5435 50  0000 C CNN
+F 1 "STAT" H 6550 5344 50  0000 C CNN
 F 2 "" H 6550 5350 50  0001 C CNN
 F 3 "http://www.apem.com/int/index.php?controller=attachment&id_attachment=1371" H 6550 5350 50  0001 C CNN
 	1    6550 5050
 	1    0    0    -1  
 $EndComp
 $Comp
-L Switch:SW_MEC_5E SW?
+L Switch:SW_MEC_5E SW0
 U 1 1 5FC7A322
 P 7550 5050
-F 0 "SW?" H 7550 5435 50  0000 C CNN
-F 1 "SW_0" H 7550 5344 50  0000 C CNN
+F 0 "SW0" H 7550 5435 50  0000 C CNN
+F 1 "0" H 7550 5344 50  0000 C CNN
 F 2 "" H 7550 5350 50  0001 C CNN
 F 3 "http://www.apem.com/int/index.php?controller=attachment&id_attachment=1371" H 7550 5350 50  0001 C CNN
 	1    7550 5050
 	1    0    0    -1  
 $EndComp
 $Comp
-L Switch:SW_MEC_5E SW?
+L Switch:SW_MEC_5E SW11
 U 1 1 5FC7A6C1
 P 8500 5050
-F 0 "SW?" H 8500 5435 50  0000 C CNN
-F 1 "SW_ENTER" H 8500 5344 50  0000 C CNN
+F 0 "SW11" H 8500 5435 50  0000 C CNN
+F 1 "ENTER" H 8500 5344 50  0000 C CNN
 F 2 "" H 8500 5350 50  0001 C CNN
 F 3 "http://www.apem.com/int/index.php?controller=attachment&id_attachment=1371" H 8500 5350 50  0001 C CNN
 	1    8500 5050
@@ -214,11 +214,7 @@ Wire Wire Line
 Wire Wire Line
 	5150 2150 8000 2150
 Wire Wire Line
-	8000 2150 8000 3550
-Wire Wire Line
 	5150 2300 8850 2300
-Wire Wire Line
-	8850 2300 8850 3550
 Wire Wire Line
 	8650 3550 8850 3550
 Wire Wire Line
@@ -230,7 +226,6 @@ Wire Wire Line
 	8000 4050 8000 4550
 Wire Wire Line
 	7750 3550 8000 3550
-Connection ~ 8000 3550
 Wire Wire Line
 	8000 3550 8000 4050
 Wire Wire Line
@@ -571,8 +566,6 @@ Wire Wire Line
 Wire Wire Line
 	5850 2750 5150 2750
 Wire Wire Line
-	6150 1800 6150 2750
-Wire Wire Line
 	6150 2900 5150 2900
 Wire Wire Line
 	6500 1800 6500 2900
@@ -752,7 +745,6 @@ Wire Wire Line
 	7350 4150 8250 4150
 Wire Wire Line
 	8850 5050 8700 5050
-Connection ~ 8850 3550
 Wire Wire Line
 	8650 4050 8850 4050
 Wire Wire Line
@@ -860,35 +852,15 @@ Connection ~ 5500 2450
 Wire Wire Line
 	5500 2450 5500 2600
 Wire Wire Line
-	5850 1800 5850 2600
-Connection ~ 5850 2600
-Wire Wire Line
-	5850 2600 5850 2750
-Wire Wire Line
-	8050 1700 8050 2750
-Wire Wire Line
-	8050 2750 6150 2750
-Connection ~ 6150 2750
-Wire Wire Line
-	6150 2750 6150 2900
-Wire Wire Line
-	8450 1700 8450 3100
-Wire Wire Line
 	8450 3100 6850 3100
 Connection ~ 6850 3100
 Wire Wire Line
 	6850 3100 6850 3200
 Wire Wire Line
-	8250 1700 8250 2900
-Wire Wire Line
 	8250 2900 6500 2900
 Connection ~ 6500 2900
 Wire Wire Line
 	6500 2900 6500 3050
-Wire Wire Line
-	7850 1700 7850 2600
-Wire Wire Line
-	5850 2600 7850 2600
 Wire Wire Line
 	7650 1700 7650 2450
 Wire Wire Line
@@ -1093,4 +1065,103 @@ Wire Wire Line
 Connection ~ 5350 5200
 Wire Wire Line
 	5350 5200 5350 5350
+$Comp
+L Device:C c1
+U 1 1 5FDC4FA0
+P 1400 5600
+F 0 "c1" H 1515 5646 50  0000 L CNN
+F 1 "1uF" H 1515 5555 50  0000 L CNN
+F 2 "" H 1438 5450 50  0001 C CNN
+F 3 "~" H 1400 5600 50  0001 C CNN
+	1    1400 5600
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:C C2
+U 1 1 5FDC5C48
+P 1850 5600
+F 0 "C2" H 1965 5646 50  0000 L CNN
+F 1 "0.1uF" H 1965 5555 50  0000 L CNN
+F 2 "" H 1888 5450 50  0001 C CNN
+F 3 "~" H 1850 5600 50  0001 C CNN
+	1    1850 5600
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x02 J2
+U 1 1 5FDDA441
+P 700 4900
+F 0 "J2" H 618 4575 50  0000 C CNN
+F 1 "Conn_01x02" H 618 4666 50  0000 C CNN
+F 2 "" H 700 4900 50  0001 C CNN
+F 3 "~" H 700 4900 50  0001 C CNN
+	1    700  4900
+	-1   0    0    1   
+$EndComp
+$Comp
+L power:VCC #PWR?
+U 1 1 5FDDCD5B
+P 900 5450
+F 0 "#PWR?" H 900 5300 50  0001 C CNN
+F 1 "VCC" H 915 5623 50  0000 C CNN
+F 2 "" H 900 5450 50  0001 C CNN
+F 3 "" H 900 5450 50  0001 C CNN
+	1    900  5450
+	-1   0    0    1   
+$EndComp
+Connection ~ 6150 2750
+Connection ~ 5850 2600
+Wire Wire Line
+	5850 2600 5850 2750
+Wire Wire Line
+	5850 1800 5850 2600
+Connection ~ 8850 3550
+Wire Wire Line
+	6150 2750 6150 2900
+Wire Wire Line
+	6150 1800 6150 2750
+Connection ~ 8000 3550
+Wire Wire Line
+	5850 2600 7850 2600
+Wire Wire Line
+	7850 1700 7850 2600
+Wire Wire Line
+	8250 1700 8250 2900
+Wire Wire Line
+	8450 1700 8450 3100
+Wire Wire Line
+	8050 2750 6150 2750
+Wire Wire Line
+	8050 1700 8050 2750
+Wire Wire Line
+	8850 2300 8850 3550
+Wire Wire Line
+	8000 2150 8000 3550
+$Comp
+L power:GND #PWR?
+U 1 1 5FE49D2B
+P 1200 4800
+F 0 "#PWR?" H 1200 4550 50  0001 C CNN
+F 1 "GND" V 1205 4672 50  0000 R CNN
+F 2 "" H 1200 4800 50  0001 C CNN
+F 3 "" H 1200 4800 50  0001 C CNN
+	1    1200 4800
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	900  4900 900  5150
+Wire Wire Line
+	900  5150 1400 5150
+Wire Wire Line
+	1850 5150 1850 5450
+Connection ~ 900  5150
+Wire Wire Line
+	900  5150 900  5450
+Wire Wire Line
+	1400 5150 1400 5450
+Connection ~ 1400 5150
+Wire Wire Line
+	1400 5150 1850 5150
+Wire Wire Line
+	900  4800 1200 4800
 $EndSCHEMATC
