@@ -8,6 +8,7 @@
 -module(epxmesh).
 
 -export([start/0]).
+-export([start_fb/0]).
 -export([start_pine/0]).
 
 -define(LED_COM,   {row,4}).  %% yellow
@@ -52,8 +53,14 @@ start() ->
 	     led_active => [?LED_APP,
 			    ?BAT_LED_1, ?BAT_LED_2] }).
 
+start_fb() ->
+    start_fb(0, 0, #{ led_pwm => 100,
+		      led_active => [?LED_APP,
+				     ?BAT_LED_1, ?BAT_LED_2] }).
+
 start_pine() ->
-    start_fb(#{ led_pwm => 100,
+    start_fb(720, 1440, 
+	     #{ led_pwm => 100,
 		led_active => [?LED_APP,
 			       ?BAT_LED_1, ?BAT_LED_2] }).
 
@@ -69,10 +76,9 @@ start(State) ->
     W = trunc(?SCALE_X * (H / ?SCALE_Y)),
     common_start(30, 30, W, H, ?DIGIT_FONT_SIZE, ?LABEL_FONT_SIZE, State).
 
-start_fb(State) ->
+start_fb(W0, H0, State) ->
     application:ensure_all_started(xbus),
     application:load(epx),
-    ok = application:load(epx),
     application:set_env(epx, backend, "fb"),
     application:ensure_all_started(epx),
     B = epx_backend:default(),
@@ -80,9 +86,17 @@ start_fb(State) ->
     %% W = epx:backend_info(B, width),
     %% H = epx:backend_info(B, height),
     B = epx_backend:default(),
-    H = epx:backend_info(B, height),
-    W = epx:backend_info(B, width),
-    %% W = trunc(?SCALE_X * (H / ?SCALE_Y)),
+    H = if H0 =:= 0 ->
+		epx:backend_info(B, height);
+	   true ->
+		H0
+	end,
+    W = if W0 =:= 0 ->
+		%% epx:backend_info(B, width),
+		trunc(?SCALE_X * (H / ?SCALE_Y));
+	   true ->
+		W0
+	end,
     common_start(0, 0, W, H, ?DIGIT_FONT_SIZE, ?LABEL_FONT_SIZE, State).
 
 
