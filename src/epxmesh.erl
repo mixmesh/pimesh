@@ -92,7 +92,7 @@ start_fb(W0, H0, State) ->
 		H0
 	end,
     W = if W0 =:= 0 ->
-		%% epx:backend_info(B, width),
+		%% epx:backend_info(B, width);
 		trunc(?SCALE_X * (H / ?SCALE_Y));
 	   true ->
 		W0
@@ -305,7 +305,7 @@ draw(Pix, ScreenMap, State) ->
 	      case Key of
 		  $? ->
 		      %% draw black inner circle
-		      Box = inset_rect(BoundingBox, {?Rw(W,15),?Rh(H,15)}),
+		      Box = inset_rect(BoundingBox, {?Rw(W,15),?Rw(W,15)}),
 		      epx_gc:set_fill_style(none),
 		      epx_gc:set_border_width(?BORDER(W)),
 		      epx_gc:set_border_color(black),
@@ -314,7 +314,7 @@ draw(Pix, ScreenMap, State) ->
 		      epx_gc:set_border_width(0);
 		  $# ->
 		      %% draw black square
-		      Box = inset_rect(BoundingBox, {?Rw(W,20),?Rh(H,20)}),
+		      Box = inset_rect(BoundingBox, {?Rw(W,20),?Rw(W,20)}),
 		      epx_gc:set_fill_style(solid),
 		      epx_gc:set_fill_color(black),
 		      epx:draw_rectangle(Pix, Box);
