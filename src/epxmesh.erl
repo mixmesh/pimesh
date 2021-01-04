@@ -8,29 +8,28 @@
 -module(epxmesh).
 
 -export([start/0]).
-
--define(TOP,  50).
--define(LEFT, 20).
--define(DX, 60).
--define(DY, 60).
--define(PADX, 10).
--define(PADY, 10).
--define(BOTTOM, 50).
--define(RIGHT, 20).
--define(BORDER, 4).
--define(COLOR1, silver).
--define(WIDTH,  (?LEFT+?RIGHT+3*?DX+2*?PADX)).
--define(HEIGHT, (?TOP+?BOTTOM+4*?DY+3*?PADY)).
+-export([start_pine/0]).
 
 -define(LED_COM,   {row,4}).  %% yellow
 -define(LED_APP,   {row,5}).  %% green (steady)
 -define(RED_LED,   {row,6}).  %% gpio on tca8418
 -define(GREEN_LED, {row,7}).  %% gpio on tca8418
--define(BAT_LED_5, {col,8}).  %% green (fully charged)
--define(BAT_LED_4, {col,7}).  %% blue
--define(BAT_LED_3, {col,6}).  %% blue
--define(BAT_LED_2, {col,5}).  %% blue
--define(BAT_LED_1, {col,4}).  %% blue
+-define(BAT_LED_5, {col,7}).  %% green (fully charged)
+-define(BAT_LED_4, {col,6}).  %% blue
+-define(BAT_LED_3, {col,5}).  %% blue
+-define(BAT_LED_2, {col,4}).  %% blue
+-define(BAT_LED_1, {col,3}).  %% blue
+
+%% window ratio
+-define(SCALE_Y, 370).
+-define(SCALE_X, 240).
+
+%% -define(DIGIT_FONT_SIZE, 46).
+%% -define(LABEL_FONT_SIZE, 10).
+
+%% fixme scale a bit
+-define(DIGIT_FONT_SIZE, 96).
+-define(LABEL_FONT_SIZE, 20).
 
 -record(level,
 	{
@@ -48,25 +47,54 @@
 	 #level{pin=?BAT_LED_4, steady=80,  charge_low=70, charge_high=80},
 	 #level{pin=?BAT_LED_5, steady=95,  charge_low=90, charge_high=95}]).
 
-
 start() ->
     start(#{ led_pwm => 100,
 	     led_active => [?LED_APP,
 			    ?BAT_LED_1, ?BAT_LED_2] }).
 
+start_pine() ->
+    start_fb(#{ led_pwm => 100,
+		led_active => [?LED_APP,
+			       ?BAT_LED_1, ?BAT_LED_2] }).
+
+%% window start (scaled to display height - 100)
 start(State) ->
     application:ensure_all_started(xbus),
-    W = ?WIDTH,
-    H = ?HEIGHT, 
     epx:start(),
-    Win = epx:window_create(30, 30, W, H, [button_press,button_release]),
+    %% W = 240, H = 370,
+    %% W = 720, H = 1440,
+    %% max height with same ratio
+    B = epx_backend:default(),
+    H = epx:backend_info(B, height) - (30+70),
+    W = trunc(?SCALE_X * (H / ?SCALE_Y)),
+    common_start(30, 30, W, H, ?DIGIT_FONT_SIZE, ?LABEL_FONT_SIZE, State).
+
+start_fb(State) ->
+    application:ensure_all_started(xbus),
+    application:load(epx),
+    ok = application:load(epx),
+    application:set_env(epx, backend, "fb"),
+    application:ensure_all_started(epx),
+    B = epx_backend:default(),
+    [_Format1|_] = epx:backend_info(B, pixel_formats), %% match?
+    %% W = epx:backend_info(B, width),
+    %% H = epx:backend_info(B, height),
+    B = epx_backend:default(),
+    H = epx:backend_info(B, height),
+    W = epx:backend_info(B, width),
+    %% W = trunc(?SCALE_X * (H / ?SCALE_Y)),
+    common_start(0, 0, W, H, ?DIGIT_FONT_SIZE, ?LABEL_FONT_SIZE, State).
+
+
+common_start(X, Y, W, H, DigitFontSize, LabelFontSize, State) ->
+    Win = epx:window_create(X, Y, W, H, [button_press,button_release]),
     epx:window_attach(Win),
     Pix = epx:pixmap_create(W, H),
     epx:pixmap_attach(Pix),
-    {ok,DigitFont} = epx_font:match([{name,"Arial"},{size,46}]),
-    {ok,LabelFont} = epx_font:match([{name,"Arial"},{size,10}]),
-    ScreenMap = screen_map(DigitFont,LabelFont),
-    State1 = State#{ digit_font => DigitFont, 
+    {ok,DigitFont} = epx_font:match([{name,"Arial"}, {size,DigitFontSize}]),
+    {ok,LabelFont} = epx_font:match([{name,"Arial"}, {size,LabelFontSize}]),
+    ScreenMap = screen_map(W, H, DigitFont,LabelFont),
+    State1 = State#{ digit_font => DigitFont,
 		     label_font => LabelFont },
     xbus:sub(<<"mixmesh.battery.soc">>),
     xbus:sub(<<"mixmesh.node.activity">>),
@@ -74,6 +102,8 @@ start(State) ->
     xbus:sub(<<"mixmesh.keypad.pwm">>),
     xbus:pub(<<"mixmesh.keypad.installed">>, true),
     loop(Pix,Win,ScreenMap,State1).
+
+
 
 loop(Pix,Win,ScreenMap,State) ->
     draw(Pix,ScreenMap,State),
@@ -134,23 +164,35 @@ update(Pix,Win) ->
     Height = epx:pixmap_info(Pix, height),
     epx:pixmap_draw(Pix, Win, 0, 0, 0, 0, Width, Height).
 
+-define(Rh(D,I), trunc(((D)*(I))/(?SCALE_Y))).
+-define(Rw(D,I), trunc(((D)*(I))/(?SCALE_X))).
 
--define(R0, (?TOP+0*?DY)).
--define(R1, (?TOP+1*(?DY+?PADY))).
--define(R2, (?TOP+2*(?DY+?PADY))).
--define(R3, (?TOP+3*(?DY+?PADY))).
+-define(TOP(H),    ?Rh((H),50)).
+-define(LEFT(W),   ?Rw((W),20)).
+-define(DX(W),     ?Rw((W),60)).
+-define(DY(H),     ?Rh((H),60)).
+-define(PADX(W),   ?Rw((W),10)).
+-define(PADY(H),   ?Rh((H),10)).
+-define(BOTTOM(H), ?Rh((H),50)).
+-define(RIGHT(W),  ?Rw((W),20)).
+-define(BORDER(W), ?Rw((W),4)).
+-define(COLOR1, silver).
 
--define(C0, (?LEFT+0*(?DX+?PADX))).
--define(C1, (?LEFT+1*(?DX+?PADX))).
--define(C2, (?LEFT+2*(?DX+?PADX))).
+-define(R0(H), (?TOP(H)+0*?DY(H))).
+-define(R1(H), (?TOP(H)+1*(?DY(H)+?PADY(H)))).
+-define(R2(H), (?TOP(H)+2*(?DY(H)+?PADY(H)))).
+-define(R3(H), (?TOP(H)+3*(?DY(H)+?PADY(H)))).
 
+-define(C0(W), (?LEFT(W)+0*(?DX(W)+?PADX(W)))).
+-define(C1(W), (?LEFT(W)+1*(?DX(W)+?PADX(W)))).
+-define(C2(W), (?LEFT(W)+2*(?DX(W)+?PADX(W)))).
 
-screen_map(DigitFont,LabelFont) ->
+screen_map(W, H, DigitFont,LabelFont) ->
     [begin
 	 {Fw,Fh} = epx_font:dimension(DigitFont,[Char]),
 	 Ascent = epx:font_info(DigitFont, ascent),
 	 R0 = max(Fw, Fh),
-	 Bw = ?BORDER,
+	 Bw = ?BORDER(W),
 	 OffsX = Bw+(R0-Fw) div 2,
 	 OffsY = Bw+((R0-Fh) div 2) + Ascent,
 	 #{ 
@@ -164,10 +206,18 @@ screen_map(DigitFont,LabelFont) ->
 	    offset  => {OffsX, OffsY} }
      end ||
 	{X,Y,Char,Color} <-
-	    [{?C0,?R0,$1,?COLOR1},{?C1,?R0,$2,?COLOR1},{?C2,?R0,$3,?COLOR1},
-	     {?C0,?R1,$4,?COLOR1},{?C1,?R1,$5,?COLOR1},{?C2,?R1,$6,?COLOR1},
-	     {?C0,?R2,$7,?COLOR1},{?C1,?R2,$8,?COLOR1},{?C2,?R2,$9,?COLOR1},
-	     {?C0,?R3,$?,yellow},{?C1,?R3,$0,?COLOR1},{?C2,?R3,$#,green}] ] ++
+	    [{?C0(W),?R0(H),$1,?COLOR1},
+	     {?C1(W),?R0(H),$2,?COLOR1},
+	     {?C2(W),?R0(H),$3,?COLOR1},
+	     {?C0(W),?R1(H),$4,?COLOR1},
+	     {?C1(W),?R1(H),$5,?COLOR1},
+	     {?C2(W),?R1(H),$6,?COLOR1},
+	     {?C0(W),?R2(H),$7,?COLOR1},
+	     {?C1(W),?R2(H),$8,?COLOR1},
+	     {?C2(W),?R2(H),$9,?COLOR1},
+	     {?C0(W),?R3(H),$?,yellow},
+	     {?C1(W),?R3(H),$0,?COLOR1},
+	     {?C2(W),?R3(H),$#,green}] ] ++
 
 	[begin
 	     Dim = epx_font:dimension(LabelFont,Name),
@@ -187,15 +237,15 @@ screen_map(DigitFont,LabelFont) ->
 	       }
 	 end ||
 	    {Name,Rect,LedList} <-
-		[{"bat",{10,10,100,30},
+		[{"bat",{?Rw(W,10),?Rh(H,10),?Rw(W,100),?Rh(H,30)},
 		  [{?BAT_LED_1,blue},{?BAT_LED_2,blue},
 		   {?BAT_LED_3,blue},{?BAT_LED_4,blue},
 		   {?BAT_LED_5,green}]},
-		 {"app",{?WIDTH-50,10,40,30},
+		 {"app",{W-?Rw(W,50),?Rh(H,10),?Rw(W,40),?Rh(H,30)},
 		  [{?LED_APP,green},{?LED_COM,yellow}]},
-		 {"pin",{10,?HEIGHT-40,23,30},[{?GREEN_LED,green}]}]
+		 {"pin",{?Rw(W,10),H-?Rh(H,40),?Rw(W,23),?Rh(H,30)},
+		  [{?GREEN_LED,green}]}]
 	].
-
 
 find_key(Pos, [#{type:=key, char:=Char, bounding_box := BoundingBox} | Maps]) ->
     case mouse_in_circle(Pos, BoundingBox) of
@@ -210,6 +260,8 @@ find_key(_Pos, []) ->
     false.
 
 draw(Pix, ScreenMap, State) ->
+    W = epx:pixmap_info(Pix, width),
+    H = epx:pixmap_info(Pix, height),
     epx:pixmap_fill(Pix, white),
     epx_gc:set_font(maps:get(digit_font,State)),
     epx_gc:set_background_color(gray),
@@ -233,10 +285,29 @@ draw(Pix, ScreenMap, State) ->
 		  false ->
 		      epx_gc:set_fill_color(BackgroundColor)
 	      end,
-	      epx:draw_ellipse(Pix, inset_rect(BoundingBox, {?BORDER,?BORDER})),
+	      epx:draw_ellipse(Pix, inset_rect(BoundingBox, 
+					       {?BORDER(W),?BORDER(W)})),
 	      set_font_color(FontColor),
-	      {X,Y,_,_} = offset_rect(BoundingBox, Offset),
-	      epx:draw_char(Pix, X, Y, Key);
+	      case Key of
+		  $? ->
+		      %% draw black inner circle
+		      Box = inset_rect(BoundingBox, {?Rw(W,15),?Rh(H,15)}),
+		      epx_gc:set_fill_style(none),
+		      epx_gc:set_border_width(?BORDER(W)),
+		      epx_gc:set_border_color(black),
+		      %% epx_gc:set_fill_color(black),
+		      epx:draw_ellipse(Pix, Box),
+		      epx_gc:set_border_width(0);
+		  $# ->
+		      %% draw black square
+		      Box = inset_rect(BoundingBox, {?Rw(W,20),?Rh(H,20)}),
+		      epx_gc:set_fill_style(solid),
+		      epx_gc:set_fill_color(black),
+		      epx:draw_rectangle(Pix, Box);
+		  _ -> %% draw char
+		     {X,Y,_,_} = offset_rect(BoundingBox, Offset),
+		     epx:draw_char(Pix, X, Y, Key)
+	      end;
 	 (_, Acc) ->
 	      Acc
       end, ok, ScreenMap),
@@ -257,9 +328,9 @@ draw(Pix, ScreenMap, State) ->
 	      epx_gc:set_fill_style(none),
 	      epx_gc:set_foreground_color(BorderColor),
 	      epx:draw_rectangle(Pix, BoundingBox),
-	      {X,Y,W,H} = BoundingBox,
-	      Wl = W div length(LedList),
-	      Hi  = H div 2,
+	      {Bx,By,Bw,Bh} = BoundingBox,
+	      Wl  = Bw div length(LedList),
+	      Hi  = Bh div 2,
 	      R   = min(Wl-2,Hi),
 	      epx_gc:set_fill_style(solid),
 	      lists:foreach(
@@ -270,16 +341,17 @@ draw(Pix, ScreenMap, State) ->
 			    false ->
 				set_led_color(LedColor, 0.0)
 			end,
-			Xi = X + (I-1)*Wl + 2,
-			Yi = Y + 4,
+			Xi = Bx + (I-1)*Wl + 2,
+			Yi = By + 4,
 			epx:draw_ellipse(Pix, {Xi,Yi,R,R})
 		end, LedList),
 	      epx_gc:set_fill_style(solid),
 	      {DW,DH} = Dim,
-	      Xl = X + 2,
-	      Yl = Y + H - Ascent,
+	      Dx = ?Rw(W,2),
+	      Xl = Bx + 2*Dx,
+	      Yl = By + Bh - Ascent,
 	      epx_gc:set_fill_color(BackgroundColor), %% pink
-	      epx:draw_rectangle(Pix, {Xl,Yl,DW,DH}),
+	      epx:draw_rectangle(Pix, {Bx+Dx,Yl,DW+2*Dx,DH}),
 	      set_font_color(FontColor),
 	      epx:draw_string(Pix, Xl, Yl+Ascent, Name);
 	 (_, Acc) ->

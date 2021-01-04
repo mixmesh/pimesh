@@ -17,11 +17,11 @@
 
 -define(SAMPLE_INTERVAL, 1000).
 
--define(BAT_LED_5, {col,8}).  %% green (fully charged)
--define(BAT_LED_4, {col,7}).  %% blue
--define(BAT_LED_3, {col,6}).  %% blue
--define(BAT_LED_2, {col,5}).  %% blue
--define(BAT_LED_1, {col,4}).  %% blue
+-define(BAT_LED_5, {col,7}).  %% green (fully charged)
+-define(BAT_LED_4, {col,6}).  %% blue
+-define(BAT_LED_3, {col,5}).  %% blue
+-define(BAT_LED_2, {col,4}).  %% blue
+-define(BAT_LED_1, {col,3}).  %% blue
 
 -record(level,
 	{
