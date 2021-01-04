@@ -305,7 +305,7 @@ draw(Pix, ScreenMap, State) ->
 	      case Key of
 		  $? ->
 		      %% draw black inner circle
-		      Box = inset_rect(BoundingBox, {?Rw(W,15),?Rw(W,15)}),
+		      Box = inset_rect(BoundingBox, {?Rh(H,15),?Rh(H,15)}),
 		      epx_gc:set_fill_style(none),
 		      epx_gc:set_border_width(?BORDER(W)),
 		      epx_gc:set_border_color(black),
@@ -314,7 +314,7 @@ draw(Pix, ScreenMap, State) ->
 		      epx_gc:set_border_width(0);
 		  $# ->
 		      %% draw black square
-		      Box = inset_rect(BoundingBox, {?Rw(W,20),?Rw(W,20)}),
+		      Box = inset_rect(BoundingBox, {?Rh(H,20),?Rh(H,20)}),
 		      epx_gc:set_fill_style(solid),
 		      epx_gc:set_fill_color(black),
 		      epx:draw_rectangle(Pix, Box);
