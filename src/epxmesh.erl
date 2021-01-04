@@ -59,7 +59,8 @@ start_fb() ->
 				     ?BAT_LED_1, ?BAT_LED_2] }).
 
 start_pine() ->
-    start_fb(720, 1440, 
+    %% 1020 to keep scale factor
+    start_fb(720, 1020, 
 	     #{ led_pwm => 100,
 		led_active => [?LED_APP,
 			       ?BAT_LED_1, ?BAT_LED_2] }).
