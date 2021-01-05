@@ -19,8 +19,8 @@
 
 -define(SYS_BATTERY, "/sys/class/power_supply/axp20x-battery").
 -define(VOLTAGE_NOW, filename:join(?SYS_BATTERY, "voltage_now")).
--define(VOLTAGE_MIN, filename:join(?SYS_BATTERY, "voltage_design_min")).
--define(VOLTAGE_MAX, filename:join(?SYS_BATTERY, "voltage_design_max")).
+-define(VOLTAGE_MIN, filename:join(?SYS_BATTERY, "voltage_min_design")).
+-define(VOLTAGE_MAX, filename:join(?SYS_BATTERY, "voltage_max_design")).
 
 -define(SAMPLE_INTERVAL, 1000).
 
