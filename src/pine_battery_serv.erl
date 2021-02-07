@@ -17,22 +17,28 @@
 -include_lib("apptools/include/serv.hrl").
 -include_lib("apptools/include/log.hrl").
 
--define(SYS_BATTERY, "/sys/class/power_supply/axp20x-battery").
--define(VOLTAGE_NOW, filename:join(?SYS_BATTERY, "voltage_now")).
--define(VOLTAGE_MIN, filename:join(?SYS_BATTERY, "voltage_min_design")).
--define(VOLTAGE_MAX, filename:join(?SYS_BATTERY, "voltage_max_design")).
+-define(SYS_POWER_BATTERY, "/sys/class/power_supply/axp20x-battery").
+-define(VOLTAGE_NOW, filename:join(?SYS_POWER_BATTERY, "voltage_now")).
+-define(VOLTAGE_MIN, filename:join(?SYS_POWER_BATTERY, "voltage_min_design")).
+-define(VOLTAGE_MAX, filename:join(?SYS_POWER_BATTERY, "voltage_max_design")).
+-define(BATTERY_STATUS, filename:join(?SYS_POWER_BATTERY, "status")).
+
+-define(SYS_POWER_USB, "/sys/class/power_supply/axp20x-usb").
+-define(USB_PRESENT, filename:join(?SYS_POWER_USB, "present")).
+
 
 -define(SAMPLE_INTERVAL, 1000).
 
 -record(state,
 	{
 	 parent,
-	 charging,
-	 voltage,
-	 voltage_min,
-	 voltage_max,
-	 soc,
-	 soc0   %% last reported soc
+	 charging  = false :: boolean(), %% battery is charging
+	 connected = false :: boolean(), %% power connected
+	 voltage      :: number(),
+	 voltage_min  :: number(),
+	 voltage_max  :: number(),
+	 soc          :: number(),
+	 soc0         :: number()  %% last reported so
 	}).
 
 start_link() ->
@@ -57,13 +63,18 @@ init(Parent) ->
     xbus:pub_meta(<<"mixmesh.battery.charging">>,
 		  [{unit,"bool"},
 		   {description, "Is battery charging."}]),
+    xbus:pub_meta(<<"mixmesh.battery.connected">>,
+		  [{unit,"bool"},
+		   {description, "Is battery connected to charger."}]),
     Vmin = read_voltage_min(),
     Vmax = read_voltage_max(),
     V0 = read_voltage(),
-    Charging = is_power_plugged(),
+    Charging = is_battery_charging(),
+    Connected = is_power_connected(),
     SOC0 = parse_voltage_level(V0,Vmin,Vmax),
     {ok, #state { parent=Parent,
 		  charging = Charging,
+		  connected = Connected,
 		  voltage_min = Vmin,
 		  voltage_max = Vmax,
 		  voltage=V0, soc=SOC0, soc0=SOC0 }}.
@@ -91,7 +102,8 @@ message_handler(State=#state{parent=Parent}) ->
 	    SOC1 = parse_voltage_level(V1,
 				       State#state.voltage_min,
 				       State#state.voltage_max),
-	    Charging = is_power_plugged(),
+	    Charging = is_battery_charging(),
+	    Connected = is_power_connected(),
 	    SOC0 = if abs(SOC1 - State#state.soc0) > 1.0 ->
 			   SOC1;
 		      true ->
@@ -100,8 +112,10 @@ message_handler(State=#state{parent=Parent}) ->
 	    xbus:pub(<<"mixmesh.battery.voltage">>, V1),
 	    xbus:pub(<<"mixmesh.battery.soc">>, SOC0),
 	    xbus:pub(<<"mixmesh.battery.charging">>, Charging),
+	    xbus:pub(<<"mixmesh.battery.connected">>, Connected),
 	    {noreply, State#state{voltage=V1,
 				  charging=Charging,
+				  connected=Connected,
 				  soc=SOC1, soc0=SOC0}}
     end.
 
@@ -110,10 +124,17 @@ parse_voltage_level(V, Vmin, Vmax) when Vmin < Vmax ->
     V2 = min(V1, Vmax),
     100*((V2 - Vmin) / (Vmax - Vmin)).
 
-is_power_plugged() ->
-    case file:read_file(filename:join(?SYS_BATTERY, "status")) of
+is_battery_charging() ->
+    case file:read_file(?BATTERY_STATUS) of
 	{ok,<<"Charging\n">>} -> true;
 	{ok,<<"Discharging\n">>} -> false;
+	_ -> error
+    end.
+
+is_power_connected() ->
+    case file:read_file(?USB_PRESENT) of
+	{ok,<<"1\n">>} -> true;
+	{ok,<<"0\n">>} -> false;
 	_ -> error
     end.
 
