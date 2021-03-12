@@ -5,8 +5,8 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 1
 Title "MixMesh keyboard"
-Date "2021-01-01"
-Rev "1.2"
+Date "2021-03-12"
+Rev "1.3"
 Comp "MixMesh"
 Comment1 ""
 Comment2 ""
@@ -1114,10 +1114,10 @@ Wire Wire Line
 	9000 3050 9000 1700
 Connection ~ 6850 3050
 $Comp
-L Device:R R37
+L Device:R R41
 U 1 1 6055B086
 P 9600 1550
-F 0 "R37" H 9530 1504 50  0000 R CNN
+F 0 "R41" H 9530 1504 50  0000 R CNN
 F 1 "10k" H 9530 1595 50  0000 R CNN
 F 2 "" V 9530 1550 50  0001 C CNN
 F 3 "~" H 9600 1550 50  0001 C CNN
@@ -1156,23 +1156,23 @@ Wire Wire Line
 Wire Wire Line
 	1150 3700 1000 3700
 Text Label 1000 2900 0    50   ~ 0
-SCL
+4-SCL
 Text Label 1000 3000 0    50   ~ 0
-SDA
+6-SDA
 Text Label 1000 3100 0    50   ~ 0
-RESET
+8-RESET
 Text Label 1000 3200 0    50   ~ 0
-INT
+2-INT
 Text Label 1000 3300 0    50   ~ 0
-COL8
+7-COL8
 Text Label 1000 3400 0    50   ~ 0
-COL9
+9-COL9
 Text Label 1000 3500 0    50   ~ 0
-PWM
+5-PWM
 Text Label 1000 3600 0    50   ~ 0
-VCC
+1-VCC
 Text Label 1000 3700 0    50   ~ 0
-GND
+10-GND
 Wire Wire Line
 	1000 3300 1300 3300
 Wire Wire Line

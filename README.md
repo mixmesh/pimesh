@@ -5,13 +5,13 @@
 The Pincode is entered via a keypad (sometimes) the suggested
 pincodes are typically 4 or 6 digits.
 
-There are 3 prototype keybaords
+There are 3 prototype keyboards
 
 - one keyboard 3x3 [1-9] on the TCA8418E-EVM (evaluation board)
 - one BIG old style (telefon) keypad 4x3  [0-9#\*]
 - one MEDIUM style (telefon) keypad 4x3  [0-9#\*]
 
-Pinlayout on EVM baord
+Pinlayout on EVM board
 
     C9 C8 C7 C6 C5 C4 C3 C2 C1 C0
     G  V  R7 R6 R5 R4 R3 R2 R1 R0
@@ -72,24 +72,51 @@ May be some kind of watch dog could try to turn the led OFF.
 
 First part (used part) of the pin header
 
-    3x3 Power   1   2  5v Power
+    3.3v Power  1   2  5v Power
     SDA         3   4  5v Power
     SCL         5   6  GND
     GPIO4(CLK)  7   8  GPIO 14 (Tx)
     GND         9  10  GPIO 15 (Rx)
-    GPIO 17    11  12  GPIO 18 (PCM CLK)
+    GPIO 17    11  12  GPIO 18 (PWM/PCM CLK)
     GPIO 27    13  14  GND
     -          15  16  -
-    3x3 Power  17  18  -
+    3.3v Power 17  18  -
 
-The TCA Lab card colors (temporary)
+## The TCA Lab card colors (temporary)
 
     1  RED    (3.3v)  TCA
     3  YELLOW (I2C SDA)
     5  GRAY   (I2C SCL)
-    7  -
-    9  GND             10 - RX  (GPS module)
+    7  -                  8 - Tx  (GPS module)
+    9  GND               10 - RX  (GPS module)
     11 BROWN  (INT)
     13 WHITE  (RESET)
     15
     17 RED    (3.3v) GPS-module
+
+## The MixMesh mini keyboard (1.3)
+
+	4 - SCL
+	6 - SDA
+	8 - RESET
+	2 - INT
+	7 - COL8
+	9 - COL9
+	5 - PWM
+	1 - VCC
+	10 - GND
+	
+## MixMesh keyboard connection to raspberry pi Z
+
+	Keyboard       Raspberry PI Z (pin header)
+	--------
+	1  - VCC       1    3.3v
+	2  - INT       11
+	3  - 	       -
+	4  - SCL       5    (I2C SCL)
+	5  - PWM       12   (GPIO 18, PWM/PCM CLK)
+	6  - SDA       3    (I2C SDA)
+	7  - COL8	   -
+	8  - RESET     13
+	9  - COL9      -
+	10 - GND       9
