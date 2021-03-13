@@ -118,6 +118,8 @@ start_link() ->
     start_link(1,false).
 
 start_link(Bus,Reset) ->
+    application:start(tree_db),
+    application:start(xbus),
     application:start(i2c),
     application:start(gpio),
     application:start(pwm),

@@ -30,6 +30,8 @@ start_link() ->
     start_link(1).
 
 start_link(Bus) ->
+    application:start(tree_db),
+    application:start(xbus),
     application:start(i2c),
     application:start(gpio),
     ?spawn_server(fun(Parent) -> init(Parent, Bus) end,
