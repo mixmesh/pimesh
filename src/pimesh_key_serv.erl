@@ -229,7 +229,7 @@ message_handler(State=#state{tca8418=TCA8418,parent=Parent}) ->
             Set = State#state.charging_set,
             update_soc(State#state.tca8418, SOC, Charging, Set),
             State1 = State#state { soc = SOC, charging_set = not Set },
-	    {norepy, State1};
+	    {noreply, State1};
         {xbus, _, #{ topic := <<"mixmesh.battery.charging">>,
 		     value := Charging }} ->
             State1 = State#state { charging = Charging },
