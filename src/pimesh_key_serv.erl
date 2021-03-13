@@ -224,23 +224,22 @@ message_handler(State=#state{tca8418=TCA8418,parent=Parent}) ->
 		     end,
 	    {noreply, State1};
 
-	{xbus, <<"mixmesh.battery.soc">>, #{ value := SOC }} ->
+	{xbus, _, #{ topic := <<"mixmesh.battery.soc">>, value := SOC }} ->
             Charging = State#state.charging,
             Set = State#state.charging_set,
             update_soc(State#state.tca8418, SOC, Charging, Set),
             State1 = State#state { soc = SOC, charging_set = not Set },
 	    {norepy, State1};
-
-        {xbus, <<"mixmesh.battery.charging">>, #{ value := Charging }} ->
+        {xbus, _, #{ topic := <<"mixmesh.battery.charging">>,
+		     value := Charging }} ->
             State1 = State#state { charging = Charging },
 	    {noreply, State1};
-
-	{xbus, <<"mixmesh.node.activity">>, #{ value := Activity }} ->
+	{xbus, _, #{ topic := <<"mixmesh.node.activity">>,
+		     value := Activity }} ->
 	    set_com(State#state.tca8418, Activity),
             State1 = State#state{ activity = Activity },
             {noreply, State1};
-
-        {xbus, <<"mixmesh.keypad.pwm">>, #{ value := PWM }} ->
+        {xbus, _, #{ topic := <<"mixmesh.keypad.pwm">>, value := PWM }} ->
 	    Duty = trunc(?PWM_PERIOD*(PWM/100)),
 	    pwm:set_duty_cycle(0, 0, Duty),
 	    if Duty =:= 0 ->  %%  range? < 5?
@@ -249,7 +248,6 @@ message_handler(State=#state{tca8418=TCA8418,parent=Parent}) ->
 		    pwm:enable(0, 0)
 	    end,
             {noreply, State#state { pwm = PWM }};
-
 	{xbus, _, _} ->  %% ignore new xbus mixmesh.* messages not handled
 	    {noreply, State};
 
