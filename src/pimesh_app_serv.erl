@@ -8,7 +8,6 @@
 -module(pimesh_app_serv).
 
 -export([start_link/0, start_link/1]).
--export([set_activity/2]).
 %% serv callback
 -export([message_handler/1]).
 
@@ -32,9 +31,6 @@ start_link(Bus) ->
     ?spawn_server(fun(Parent) -> init(Parent, Bus) end,
 		  fun ?MODULE:message_handler/1).
 
-set_activity(Serv, Act) ->
-    serv:call(Serv, {set_activity, Act}).
-
 init(Parent, _Bus) ->
     xbus:pub_meta(<<"mixmesh.node.running">>, 
 		  [{unit,"bool"},
@@ -49,10 +45,6 @@ message_handler(State=#state{activity_tmo=ActivityTmo,
     receive
         {call, From, stop} ->
             {stop, From, ok};
-
-        {call, From, {set_activity,A}} ->
-	    Activity = State#state.activity + A,
-            {reply, From, ok,State#state { activity = Activity }}; 
 
         {'EXIT', Parent, Reason} ->
 	    exit(Reason);

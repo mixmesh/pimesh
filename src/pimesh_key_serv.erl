@@ -183,6 +183,9 @@ init(Parent, Bus, Reset) ->
     Events = i2c_tca8418:read_events(TCA8418),
     State0 = #state { parent=Parent, tca8418=TCA8418, pwm = 0.5 },
     State  = scan_events(Events, State0),
+
+    xbus:sub(<<"mixmesh.*">>),
+
     {ok, State}.
 
 %% reset tca8418 - reset all registers
@@ -246,6 +249,9 @@ message_handler(State=#state{tca8418=TCA8418,parent=Parent}) ->
 		    pwm:enable(0, 0)
 	    end,
             {noreply, State#state { pwm = PWM }};
+
+	{xbus, _, _} ->  %% ignore new xbus mixmesh.* messages not handled
+	    {noreply, State};
 
 	{timeout,_TRef,backoff} ->  %% backoff period is over
 	    {noreply, State#state { backoff = false }};
