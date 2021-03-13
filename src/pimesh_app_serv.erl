@@ -17,47 +17,34 @@
 
 -define(SAMPLE_INTERVAL, 1000).
 
--define(LED_COM, {row,4}).  %% yellow
--define(LED_APP, {row,5}).  %% green (steady)
-
 -record(state,
 	{
 	 parent,
 	 activity=0,
 	 activity_tmo=500,
-	 toggle=false,
-	 tca8418
+	 toggle=false
 	}).
-
 
 start_link() ->
     start_link(1).
 
 start_link(Bus) ->
-    application:start(i2c),
     ?spawn_server(fun(Parent) -> init(Parent, Bus) end,
 		  fun ?MODULE:message_handler/1).
 
 set_activity(Serv, Act) ->
     serv:call(Serv, {set_activity, Act}).
 
+init(Parent, _Bus) ->
+    xbus:pub_meta(<<"mixmesh.node.running">>, 
+		  [{unit,"bool"},
+		   {description, "MixMesh is running."}]),
+    xbus:pub_meta(<<"mixmesh.node.activity">>, 
+		  [{unit,"bool"},
+		   {description, "MixMesh communication."}]),
+    {ok, #state { parent=Parent }}.
 
-init(Parent, Bus) ->
-    {ok,TCA8418} = i2c_tca8418:open1(Bus),
-    i2c_tca8418:gpio_init(TCA8418, ?LED_COM),
-    i2c_tca8418:gpio_output(TCA8418, ?LED_COM),
-    i2c_tca8418:gpio_clr(TCA8418, ?LED_COM),
-
-    i2c_tca8418:gpio_init(TCA8418, ?LED_APP),
-    i2c_tca8418:gpio_output(TCA8418, ?LED_APP),
-    i2c_tca8418:gpio_set(TCA8418, ?LED_APP),
-
-    {ok, #state { parent=Parent,
-    	 	  tca8418 = TCA8418 }}.
-
-
-message_handler(State=#state{tca8418=TCA8418,
-			     activity_tmo=ActivityTmo,
+message_handler(State=#state{activity_tmo=ActivityTmo,
 			     parent=Parent}) ->
     receive
         {call, From, stop} ->
@@ -77,13 +64,11 @@ message_handler(State=#state{tca8418=TCA8418,
             noreply
 
     after ActivityTmo ->
-	    Toggle = not State#state.toggle,
-	    if Toggle ->
-		    i2c_tca8418:gpio_set(TCA8418, ?LED_COM);
-	       true ->
-		    i2c_tca8418:gpio_clr(TCA8418, ?LED_COM)
-	    end,
+	    Toggle = not State#state.toggle, %% FIXME: get from nodis
+	    publish(Toggle),
 	    {noreply, State#state{toggle=Toggle}}
     end.
 			
-
+publish(Activity) ->
+    xbus:pub(<<"mixmesh.node.running">>, true),
+    xbus:pub(<<"mixmesh.node.activity">>, Activity).

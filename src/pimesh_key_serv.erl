@@ -20,9 +20,12 @@
 -define(INT_PIN,  17).   %% gpio on raspberry pi
 -define(RESET_PIN, 27).  %% gpio on raspberry pi
 
-%% two colored led
--define(RED_LED,   {row,6}).  %% gpio on tca8418
--define(GREEN_LED, {row,7}).  %% gpio on tca8418
+%% 2-colored led (red-green-yellow)
+-define(LED_RED,   {row,6}).  %% gpio on tca8418
+-define(LED_GREEN, {row,7}).  %% gpio on tca8418
+
+-define(LED_COM,   {row,4}).  %% communication ectivity
+-define(LED_APP,   {row,5}).  %% application status
 
 %% default lock code keys
 -define(KEY_Asterisk, 31).
@@ -44,6 +47,43 @@
 -define(BACK_OF_TIME_6, 3400).  %% first wait 1h
 -define(BACK_OF_TIME_7, 86400).  %% max wait one day
 
+-define(PWM_PERIOD, 1000000).   %% 1KHz
+
+-record(level,
+	{
+	 pin,
+	 steady,
+	 charge_low,
+	 charge_high
+	}).
+
+-define(BAT_LED_5, {col,7}).  %% green (fully charged)
+-define(BAT_LED_4, {col,6}).  %% blue
+-define(BAT_LED_3, {col,5}).  %% blue
+-define(BAT_LED_2, {col,4}).  %% blue
+-define(BAT_LED_1, {col,3}).  %% blue
+
+%%           B1  B2  B3  B4  G
+%% (0-5)     0   0   0   0   0
+%% (5-10)    x   0   0   0   0
+%% (10-30)   1   0   0   0   0
+%% (30-40)   1   x   0   0   0
+%% (40-60)   1   1   0   0   0
+%% (60-70)   1   1   x   0   0
+%% (70-80)   1   1   1   0   0
+%% (80-90)   1   1   1   x   0
+%% (90-100)  1   1   1   1   0
+%% (80-90)   1   1   1   x   0
+%% (95-100)  1   1   1   1   1
+
+%% {Pin, Steady, Charge-low, Charge-high}
+-define(LEVEL_LIST,
+	[#level{pin=?BAT_LED_1, steady=20,  charge_low=15, charge_high=20},
+	 #level{pin=?BAT_LED_2, steady=40,  charge_low=30, charge_high=40},
+	 #level{pin=?BAT_LED_3, steady=60,  charge_low=50, charge_high=60},
+	 #level{pin=?BAT_LED_4, steady=80,  charge_low=70, charge_high=80},
+	 #level{pin=?BAT_LED_5, steady=95,  charge_low=90, charge_high=95}]).
+
 -record(state,
 	{
 	 parent,
@@ -62,7 +102,13 @@
 	 attempts = 0,
 	 backoff = false,
 	 count = 0,   %% number of keys total since start of attempts
-	 code = []    %% entered code (fixme digest)
+	 code = [],   %% entered code (fixme digest)
+	 %% battery status
+	 soc = 0,
+	 charging = false,
+	 charging_set = false,
+	 activity = false,      %% last activity
+	 pwm = 0.0              %% last pwm value (0-100)
 	}).
 
 is_locked(Serv) ->
@@ -74,6 +120,7 @@ start_link() ->
 start_link(Bus,Reset) ->
     application:start(i2c),
     application:start(gpio),
+    application:start(pwm),
     ?spawn_server(fun(Parent) -> init(Parent, Bus, Reset) end,
 		  fun ?MODULE:message_handler/1).
 
@@ -84,18 +131,41 @@ init(Parent, Bus, Reset) ->
     gpio:init(?INT_PIN),
     gpio:init(?RESET_PIN),
 
-    i2c_tca8418:gpio_init(TCA8418, ?GREEN_LED),
-    i2c_tca8418:gpio_output(TCA8418, ?GREEN_LED),
+    lists:foreach(
+      fun(#level{pin=Pin}) ->
+	      i2c_tca8418:gpio_init(TCA8418, Pin)
+      end, ?LEVEL_LIST),
+    i2c_tca8418:gpio_init(TCA8418, ?LED_GREEN),
+    i2c_tca8418:gpio_init(TCA8418, ?LED_RED),
+    i2c_tca8418:gpio_init(TCA8418, ?LED_COM),
+    i2c_tca8418:gpio_init(TCA8418, ?LED_APP),
 
-    i2c_tca8418:gpio_init(TCA8418, ?RED_LED),
-    i2c_tca8418:gpio_output(TCA8418, ?RED_LED),
-
-    set_led(TCA8418, off),
+    pwm:export(0, 0),  %% export PWM0 (pin 12, GPIO_18)
 
     %% sleep since gpio:init is async, fixme somehow...
     %% we could use low-level api but we still need the 
     %% to poll on the gpioxyz/value file for interrupts...
     timer:sleep(1000), 
+
+    %% now we should be able to use GPIO & PWM
+    lists:foreach(
+      fun(#level{pin=Pin}) ->
+	      i2c_tca8418:gpio_output(TCA8418, Pin),
+	      i2c_tca8418:gpio_clr(TCA8418, Pin)
+      end, ?LEVEL_LIST),
+
+    i2c_tca8418:gpio_output(TCA8418, ?LED_GREEN),
+    i2c_tca8418:gpio_output(TCA8418, ?LED_RED),
+    i2c_tca8418:gpio_output(TCA8418, ?LED_COM),
+    i2c_tca8418:gpio_output(TCA8418, ?LED_APP),
+    
+    set_led(TCA8418, off),
+    set_com(TCA8418, false),
+    set_app(TCA8418, false),
+
+    pwm:set_period(0, 0, ?PWM_PERIOD),
+    pwm:set_duty_cycle(0, 0, trunc(?PWM_PERIOD*0.5)),
+    pwm:enable(0,0),
 
     gpio:set_direction(?INT_PIN, in),
     gpio:set_interrupt(?INT_PIN, falling),
@@ -109,7 +179,7 @@ init(Parent, Bus, Reset) ->
     configure(TCA8418, {4,3}),
 
     Events = i2c_tca8418:read_events(TCA8418),
-    State0 = #state { parent=Parent, tca8418=TCA8418 },
+    State0 = #state { parent=Parent, tca8418=TCA8418, pwm = 0.5 },
     State  = scan_events(Events, State0),
     {ok, State}.
 
@@ -148,6 +218,32 @@ message_handler(State=#state{tca8418=TCA8418,parent=Parent}) ->
 			     scan_events(Events, State)
 		     end,
 	    {noreply, State1};
+
+	{xbus, <<"mixmesh.battery.soc">>, #{ value := SOC }} ->
+            Charging = State#state.charging,
+            Set = State#state.charging_set,
+            update_soc(State#state.tca8418, SOC, Charging, Set),
+            State1 = State#state { soc = SOC, charging_set = not Set },
+	    {norepy, State1};
+
+        {xbus, <<"mixmesh.battery.charging">>, #{ value := Charging }} ->
+            State1 = State#state { charging = Charging },
+	    {noreply, State1};
+
+	{xbus, <<"mixmesh.node.activity">>, #{ value := Activity }} ->
+	    set_com(State#state.tca8418, Activity),
+            State1 = State#state{ activity = Activity },
+            {noreply, State1};
+
+        {xbus, <<"mixmesh.keypad.pwm">>, #{ value := PWM }} ->
+	    Duty = trunc(?PWM_PERIOD*(PWM/100)),
+	    pwm:set_duty_cycle(0, 0, Duty),
+	    if Duty =:= 0 ->  %%  range? < 5?
+		    pwm:disable(0, 0);
+	       true ->
+		    pwm:enable(0, 0)
+	    end,
+            {noreply, State#state { pwm = PWM }};
 
 	{timeout,_TRef,backoff} ->  %% backoff period is over
 	    {noreply, State#state { backoff = false }};
@@ -271,17 +367,28 @@ backoff_s(6) -> ?BACK_OF_TIME_6;
 backoff_s(_) -> ?BACK_OF_TIME_7.
 
 set_led(TCA8418, off) ->
-    i2c_tca8418:gpio_clr(TCA8418, ?GREEN_LED),
-    i2c_tca8418:gpio_clr(TCA8418, ?RED_LED);    
+    i2c_tca8418:gpio_clr(TCA8418, ?LED_GREEN),
+    i2c_tca8418:gpio_clr(TCA8418, ?LED_RED);
 set_led(TCA8418, red) ->
-    i2c_tca8418:gpio_clr(TCA8418, ?GREEN_LED),
-    i2c_tca8418:gpio_set(TCA8418, ?RED_LED);
+    i2c_tca8418:gpio_clr(TCA8418, ?LED_GREEN),
+    i2c_tca8418:gpio_set(TCA8418, ?LED_RED);
 set_led(TCA8418, green) ->
-    i2c_tca8418:gpio_set(TCA8418, ?GREEN_LED),
-    i2c_tca8418:gpio_clr(TCA8418, ?RED_LED);
+    i2c_tca8418:gpio_set(TCA8418, ?LED_GREEN),
+    i2c_tca8418:gpio_clr(TCA8418, ?LED_RED);
 set_led(TCA8418, yellow) ->
-    i2c_tca8418:gpio_set(TCA8418, ?GREEN_LED),
-    i2c_tca8418:gpio_set(TCA8418, ?RED_LED).
+    i2c_tca8418:gpio_set(TCA8418, ?LED_GREEN),
+    i2c_tca8418:gpio_set(TCA8418, ?LED_RED).
+
+set_com(TCA8418, true) ->
+    i2c_tca8418:gpio_set(TCA8418, ?LED_COM);
+set_com(TCA8418, false) ->
+    i2c_tca8418:gpio_clr(TCA8418, ?LED_COM).
+
+set_app(TCA8418, true) ->
+    i2c_tca8418:gpio_set(TCA8418, ?LED_APP);
+set_app(TCA8418, false) ->
+    i2c_tca8418:gpio_clr(TCA8418, ?LED_APP).
+
 
 %% add key when 0-9 to pincode make sure length is
 %% at most pincode_len
@@ -300,3 +407,15 @@ add_key(Key, State) ->
        true ->
 	    State
     end.
+
+%% update battry charging status leds
+update_soc(TCA8418, Soc, Charging, Set) ->
+    lists:foreach(
+      fun(#level{pin=Pin, steady=Steady, 
+	       charge_low=Low, charge_high=High}) ->
+	      if Soc > Steady; Charging, Soc >= Low, Soc =< High, Set ->
+		      i2c_tca8418:gpio_set(TCA8418, Pin);
+		 true ->
+		      i2c_tca8418:gpio_clr(TCA8418, Pin)
+	      end
+      end, ?LEVEL_LIST).

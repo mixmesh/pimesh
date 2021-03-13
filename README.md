@@ -111,12 +111,12 @@ First part (used part) of the pin header
 	Keyboard       Raspberry PI Z (pin header)
 	--------
 	1  - VCC       1    3.3v
-	2  - INT       11
+	2  - INT       11   (GPIO 17)
 	3  - 	       -
-	4  - SCL       5    (I2C SCL)
+	4  - SCL       5    (GPIO 3, I2C SCL)
 	5  - PWM       12   (GPIO 18, PWM/PCM CLK)
-	6  - SDA       3    (I2C SDA)
+	6  - SDA       3    (GPIO 2, I2C SDA)
 	7  - COL8	   -
-	8  - RESET     13
+	8  - RESET     13   (GPIO 27)
 	9  - COL9      -
-	10 - GND       9
+	10 - GND       9    (GND)
