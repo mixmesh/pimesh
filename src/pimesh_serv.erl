@@ -1,11 +1,11 @@
 %%% @author Tony Rogvall <tony@rogvall.se>
 %%% @copyright (C) 2020, Tony Rogvall
 %%% @doc
-%%%
+%%%    Pimesh keyboard serv
 %%% @end
 %%% Created : 24 Nov 2020 by Tony Rogvall <tony@rogvall.se>
 
--module(pimesh_key_serv).
+-module(pimesh_serv).
 
 -export([start_link/0, start_link/2]).
 -export([message_handler/1]).
@@ -20,12 +20,11 @@
 -define(INT_PIN,  17).   %% gpio on raspberry pi
 -define(RESET_PIN, 27).  %% gpio on raspberry pi
 
-%% 2-colored led (red-green-yellow)
--define(LED_RED,   {row,6}).  %% gpio on tca8418
--define(LED_GREEN, {row,7}).  %% gpio on tca8418
-
 -define(LED_COM,   {row,4}).  %% communication ectivity
 -define(LED_APP,   {row,5}).  %% application status
+%% 2-colored led (red-green-yellow)
+-define(LED_GREEN, {row,6}).  %% gpio on tca8418
+-define(LED_RED,   {row,7}).  %% gpio on tca8418
 
 %% default lock code keys
 -define(KEY_Asterisk, 31).
@@ -98,7 +97,7 @@
 	 pincode_lock_key1 = ?KEY_Asterisk,
 	 pincode_lock_key2 = ?KEY_Number,
 	 toggle = false,
-	 blink_tmo = ?BLINK_OFF_TMO,	 
+	 blink_tmr = undefined,   %% current timer
 	 attempts = 0,
 	 backoff = false,
 	 count = 0,   %% number of keys total since start of attempts
@@ -107,6 +106,7 @@
 	 soc = 0,
 	 charging = false,
 	 charging_set = false,
+	 activity = 1000,       %% length of activity pulse
 	 activity_tmr = undefined :: reference(),  %% activity timer
 	 pwm = 0.0              %% last pwm value (0-100)
 	}).
@@ -184,9 +184,13 @@ init(Parent, Bus, Reset) ->
     State0 = #state { parent=Parent, tca8418=TCA8418, pwm = 0.5 },
     State  = scan_events(Events, State0),
 
+    set_led(TCA8418, yellow),
+    TRef = start_timer(?BLINK_ON_TMO, blink),
+
     xbus:sub(<<"mixmesh.*">>),
 
-    {ok, State}.
+    {ok, State#state { blink_tmr = TRef, toggle = false }}.
+
 
 %% reset tca8418 - reset all registers
 hw_reset() ->
@@ -197,11 +201,6 @@ hw_reset() ->
     timer:sleep(10).
     
 message_handler(State=#state{tca8418=TCA8418,parent=Parent}) ->
-    BlinkTmo = if State#state.backoff ->
-		       infinity;
-		  true ->
-		       State#state.blink_tmo
-	       end,
     receive
         {call, From, stop} ->
             {stop, From, ok};
@@ -234,11 +233,12 @@ message_handler(State=#state{tca8418=TCA8418,parent=Parent}) ->
 	{xbus, _, #{ topic := <<"mixmesh.node.activity">>,
 		     value := Activity }} ->
 	    if is_reference(State#state.activity_tmr) ->
-		    {noreply, State};
+		    {noreply, State#state { activity = Activity }};
 	       true ->
 		    set_com(State#state.tca8418, true),
-		    Timer = erlang:start_timer(Activity, self(), no_activity),
-		    {noreply, State#state{ activity_tmr = Timer }}
+		    Timer = start_timer(Activity, no_activity),
+		    {noreply, State#state{ activity = Activity,
+					   activity_tmr = Timer }}
 	    end;
 	{xbus, _, #{ topic := <<"mixmesh.node.running">>,
 		     value := Running }} ->
@@ -258,12 +258,36 @@ message_handler(State=#state{tca8418=TCA8418,parent=Parent}) ->
 	{xbus, _, _} ->  %% ignore new xbus mixmesh.* messages not handled
 	    {noreply, State};
 
-	{timeout,_TRef,no_activity} ->
-	    set_com(State#state.tca8418, false),
-	    {noreply, State#state{ activity_tmr = undefined }};
+	{timeout,_TRef, no_activity} ->
+	    Tmr = if State#state.activity =:= 0 ->
+			  set_com(State#state.tca8418, false),
+			  undefined;
+		     true ->
+			  start_timer(State#state.activity, no_activity)
+		  end,
+	    {noreply, State#state{ activity_tmr = Tmr }};
 
 	{timeout,_TRef,backoff} ->  %% backoff period is over
-	    {noreply, State#state { backoff = false }};
+	    set_led(TCA8418, yellow),
+	    TRef = start_timer(?BLINK_ON_TMO, blink),
+	    {noreply, State#state { backoff = false,
+				    blink_tmr = TRef, toggle = false }};
+
+	{timeout,_TRef,blink} when _TRef =:= State#state.blink_tmr ->
+	    Toggle = not State#state.toggle,
+	    Tmo = if State#state.backoff ->
+			  infinity;
+		     Toggle ->
+			  set_led(TCA8418, yellow),
+			  ?BLINK_ON_TMO;
+		     true ->
+			  set_led(TCA8418, off),
+			  ?BLINK_OFF_TMO
+		  end,
+	    TRef = start_timer(Tmo, blink),
+	    {noreply, State#state { toggle = Toggle, blink_tmr = TRef }};
+	{timeout,_TRef,blink} ->
+	    {noreply, State};
 
         {'EXIT', Parent, Reason} ->
 	    exit(Reason);
@@ -272,18 +296,29 @@ message_handler(State=#state{tca8418=TCA8418,parent=Parent}) ->
         UnknownMessage ->
             ?error_log({unknown_message, UnknownMessage}),
             noreply
-    after BlinkTmo ->
-	    Toggle = not State#state.toggle,
-	    Tmo = 
-		if Toggle ->
-			set_led(TCA8418, yellow),
-			?BLINK_ON_TMO;
-		   true ->
-			set_led(TCA8418, off),
-			?BLINK_OFF_TMO
-		end,
-	    {noreply, State#state { toggle = Toggle, blink_tmo = Tmo }}
     end.
+
+start_timer(infinity, _) ->
+    undefined;
+start_timer(Timeout, Message) ->
+    Timeout1 = max(50, Timeout),
+    erlang:start_timer(Timeout1, self(), Message).
+
+cancel_timer(undefined) ->
+    true;
+cancel_timer(TRef) ->
+    case erlang:cancel_timer(TRef) of
+	false ->
+	    receive
+		{timeout, TRef, _} ->
+		    true
+	    after 0 ->
+		    false
+	    end;
+	_Remain ->
+	    true
+    end.
+	    
 %% either 
 scan_events([{press,Key}|Es],State) when 
       not State#state.locked,
@@ -301,8 +336,8 @@ scan_events([{press,Key}|Es],State) when
 			   count    = 0,
 			   code     = [],
 			   prev_key = undefined,
-			   toggle   = false,
-			   blink_tmo = ?BLINK_OFF_TMO },
+			   toggle   = false
+			 },
     scan_events(Es, State1);
 scan_events([{press,Key}|Es],State) when 
       State#state.locked,
@@ -347,13 +382,15 @@ scan_events([], State) ->
 check_pincode(State, Enter) ->
     io:format("CODE=~s\n", [State#state.code]),
     if State#state.code =:= State#state.pincode ->
+	    cancel_timer(State#state.blink_tmr),
 	    set_led(State#state.tca8418, green),
 	    State#state { locked = false,
 			  attempts = 0,
 			  count = 0,
 			  code = [],
 			  toggle = true,
-			  blink_tmo = infinity };
+			  blink_tmr = undefined
+			};
        Enter -> %% enter key was pressed 
 	    failed_attempt(State#state.attempts + 1,
 			   State#state { code = [] });
@@ -370,10 +407,12 @@ check_pincode(State, Enter) ->
 
 failed_attempt(Attempts, State) ->
     BackOff_Ms = backoff_s(Attempts)*1000,
-    erlang:start_timer(BackOff_Ms, self(), backoff),
+    cancel_timer(State#state.blink_tmr),
+    start_timer(BackOff_Ms, backoff),
     set_led(State#state.tca8418, red),
-    State#state { backoff = true, attempts = Attempts }.
-    
+    State#state { backoff = true, 
+		  blink_tmr = undefined, 
+		  attempts = Attempts }.
 
 backoff_s(1) -> ?BACK_OF_TIME_1;
 backoff_s(2) -> ?BACK_OF_TIME_2;

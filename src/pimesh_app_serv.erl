@@ -1,7 +1,7 @@
 %%% @author Tony Rogvall <tony@rogvall.se>
 %%% @copyright (C) 2020, Tony Rogvall
 %%% @doc
-%%%    start the app monitor leds
+%%%    start the app monitor
 %%% @end
 %%% Created :  4 Dec 2020 by Tony Rogvall <tony@rogvall.se>
 

@@ -28,16 +28,16 @@ init(_Args) ->
     AppServ =
 	{pimesh_app_serv, {pimesh_app_serv, start_link, []},
 	 permanent, 5000, worker, [pimesh_app_serv]},
-    KeyServ =
-	{pimesh_key_serv, {pimesh_key_serv, start_link, []},
-	 permanent, 5000, worker, [pimesh_key_serv]},
     BatteryServ = 
 	{pimesh_battery_serv, {pimesh_battery_serv, start_link, []},
 	 permanent, 5000, worker, [pimesh_battery_serv]},
     GpsServ = 
 	{pimesh_gps_serv, {pimesh_gps_serv, start_link, []},
 	 permanent, 5000, worker, [pimesh_gps_serv]},
+    PiMeshServ =
+	{pimesh_serv, {pimesh_serv, start_link, []},
+	 permanent, 5000, worker, [pimesh_serv]},
 
-    {ok,{{one_for_all,3,5}, [AppServ,KeyServ,BatteryServ,GpsServ]}}.
+    {ok,{{one_for_all,3,5}, [AppServ,BatteryServ,GpsServ,PiMeshServ]}}.
 
 
