@@ -168,7 +168,7 @@ init(Parent, Bus, Reset) ->
     set_app(TCA8418, false),
 
     pwm:set_period(0, 0, ?PWM_PERIOD),
-    pwm:set_duty_cycle(0, 0, trunc(?PWM_PERIOD*0.5)),
+    pwm:set_duty_cycle(0, 0, trunc(?PWM_PERIOD*0.05)),
     pwm:enable(0,0),
 
     gpio:set_direction(?INT_PIN, in),
@@ -254,6 +254,11 @@ message_handler(State=#state{tca8418=TCA8418,parent=Parent}) ->
 		    pwm:enable(0, 0)
 	    end,
             {noreply, State#state { pwm = PWM }};
+
+        {xbus, _, #{ topic := <<"mixmesh.keypad.led">>, value := Led }} ->
+	    %% test pin-led
+	    set_led(State#state.tca8418, Led),
+	    {noreply, State};
 
 	{xbus, _, _} ->  %% ignore new xbus mixmesh.* messages not handled
 	    {noreply, State};
