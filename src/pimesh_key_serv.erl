@@ -107,7 +107,7 @@
 	 soc = 0,
 	 charging = false,
 	 charging_set = false,
-	 activity = false,      %% last activity
+	 activity_tmr = undefined :: reference(),  %% activity timer
 	 pwm = 0.0              %% last pwm value (0-100)
 	}).
 
@@ -225,15 +225,21 @@ message_handler(State=#state{tca8418=TCA8418,parent=Parent}) ->
             update_soc(State#state.tca8418, SOC, Charging, Set),
             State1 = State#state { soc = SOC, charging_set = not Set },
 	    {noreply, State1};
+
         {xbus, _, #{ topic := <<"mixmesh.battery.charging">>,
 		     value := Charging }} ->
             State1 = State#state { charging = Charging },
 	    {noreply, State1};
+
 	{xbus, _, #{ topic := <<"mixmesh.node.activity">>,
 		     value := Activity }} ->
-	    set_com(State#state.tca8418, Activity),
-            State1 = State#state{ activity = Activity },
-            {noreply, State1};
+	    if is_reference(State#state.activity_tmr) ->
+		    {noreply, State};
+	       true ->
+		    set_com(State#state.tca8418, true),
+		    Timer = erlang:start_timer(Activity, self(), no_activity),
+		    {noreply, State#state{ activity_tmr = Timer }}
+	    end;
 	{xbus, _, #{ topic := <<"mixmesh.node.running">>,
 		     value := Running }} ->
 	    set_app(State#state.tca8418, Running),
@@ -248,8 +254,13 @@ message_handler(State=#state{tca8418=TCA8418,parent=Parent}) ->
 		    pwm:enable(0, 0)
 	    end,
             {noreply, State#state { pwm = PWM }};
+
 	{xbus, _, _} ->  %% ignore new xbus mixmesh.* messages not handled
 	    {noreply, State};
+
+	{timeout,_TRef,no_activity} ->
+	    set_com(State#state.tca8418, false),
+	    {noreply, State#state{ activity_tmr = undefined }};
 
 	{timeout,_TRef,backoff} ->  %% backoff period is over
 	    {noreply, State#state { backoff = false }};
