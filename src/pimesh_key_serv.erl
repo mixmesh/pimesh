@@ -133,6 +133,8 @@ init(Parent, Bus, Reset) ->
     gpio:init(?INT_PIN),
     gpio:init(?RESET_PIN),
 
+    i2c_tca8418:configure_4x3(TCA8418),  %% set 4x3 mode
+
     lists:foreach(
       fun(#level{pin=Pin}) ->
 	      i2c_tca8418:gpio_init(TCA8418, Pin)
@@ -178,8 +180,6 @@ init(Parent, Bus, Reset) ->
        true -> ok
     end,
 
-    configure(TCA8418, {4,3}),
-
     Events = i2c_tca8418:read_events(TCA8418),
     State0 = #state { parent=Parent, tca8418=TCA8418, pwm = 0.5 },
     State  = scan_events(Events, State0),
@@ -196,11 +196,6 @@ hw_reset() ->
     gpio:set(?RESET_PIN),
     timer:sleep(10).
     
-configure(I2C,{3,3}) ->
-    i2c_tca8418:configure_3x3(I2C);
-configure(I2C,{4,3}) ->
-    i2c_tca8418:configure_4x3(I2C).
-
 message_handler(State=#state{tca8418=TCA8418,parent=Parent}) ->
     BlinkTmo = if State#state.backoff ->
 		       infinity;
@@ -239,6 +234,11 @@ message_handler(State=#state{tca8418=TCA8418,parent=Parent}) ->
 	    set_com(State#state.tca8418, Activity),
             State1 = State#state{ activity = Activity },
             {noreply, State1};
+	{xbus, _, #{ topic := <<"mixmesh.node.running">>,
+		     value := Running }} ->
+	    set_app(State#state.tca8418, Running),
+            {noreply, State};
+
         {xbus, _, #{ topic := <<"mixmesh.keypad.pwm">>, value := PWM }} ->
 	    Duty = trunc(?PWM_PERIOD*(PWM/100)),
 	    pwm:set_duty_cycle(0, 0, Duty),

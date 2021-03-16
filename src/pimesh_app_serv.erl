@@ -14,14 +14,12 @@
 -include_lib("apptools/include/serv.hrl").
 -include_lib("apptools/include/log.hrl").
 
--define(SAMPLE_INTERVAL, 1000).
-
 -record(state,
 	{
 	 parent,
 	 activity=0,
-	 activity_tmo=500,
-	 toggle=false
+	 activity_tmo=1000,
+	 last_ping_count = 0
 	}).
 
 start_link() ->
@@ -38,7 +36,8 @@ init(Parent, _Bus) ->
     xbus:pub_meta(<<"mixmesh.node.activity">>, 
 		  [{unit,"bool"},
 		   {description, "MixMesh communication."}]),
-    {ok, #state { parent=Parent }}.
+    NPing = nodis:read_node_counter(ping),
+    {ok, #state { parent=Parent, last_ping_count = NPing }}.
 
 message_handler(State=#state{activity_tmo=ActivityTmo,
 			     parent=Parent}) ->
@@ -56,9 +55,17 @@ message_handler(State=#state{activity_tmo=ActivityTmo,
             noreply
 
     after ActivityTmo ->
-	    Toggle = not State#state.toggle, %% FIXME: get from nodis
-	    publish(Toggle),
-	    {noreply, State#state{toggle=Toggle}}
+	    NPing = nodis:read_node_counter(ping),
+	    NUp = nodis:read_node_counter(up),
+	    %% DPing = NPing - State#state.last_ping_count,
+	    Activity =
+		if NUp =:= 0 ->
+			0;
+		   true ->
+			max(100, trunc(1000 - (math:log2(NUp*8)*100)))
+		end,
+	    publish(Activity),
+	    {noreply, State#state{last_ping_count=NPing}}
     end.
 			
 publish(Activity) ->
