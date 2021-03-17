@@ -1,11 +1,11 @@
 %%% @author Tony Rogvall <tony@rogvall.se>
-%%% @copyright (C) 2020, Tony Rogvall
+%%% @copyright (C) 2021, Tony Rogvall
 %%% @doc
-%%%    Keep track on pine64 battery and application status
+%%%    Keep track on laptop battery and application status
 %%% @end
-%%% Created : 19 Nov 2020 by Tony Rogvall <tony@rogvall.se>
+%%% Created : 17 Mar 2021 by Tony Rogvall <tony@rogvall.se>
 
--module(pine_battery_serv).
+-module(sys_battery_serv).
 
 -export([start_link/0]).
 -export([get_voltage/1, get_soc/1]).
@@ -13,20 +13,23 @@
 -export([message_handler/1]).
 %% test
 -export([read_voltage/0]).
+-export([read_voltage_min/0]).
+-export([read_voltage_max/0]).
+-export([soc/0]).
 -export([is_power_connected/0]).
 -export([is_battery_charging/0]).
 
 -include_lib("apptools/include/serv.hrl").
 -include_lib("apptools/include/log.hrl").
 
--define(SYS_POWER_BATTERY, "/sys/class/power_supply/axp20x-battery").
+-define(SYS_POWER_BATTERY, "/sys/class/power_supply/BAT0").
 -define(VOLTAGE_NOW, filename:join(?SYS_POWER_BATTERY, "voltage_now")).
 -define(VOLTAGE_MIN, filename:join(?SYS_POWER_BATTERY, "voltage_min_design")).
--define(VOLTAGE_MAX, filename:join(?SYS_POWER_BATTERY, "voltage_max_design")).
+-define(VOLTAGE_MAX_VALUE, 12498000).
 -define(BATTERY_STATUS, filename:join(?SYS_POWER_BATTERY, "status")).
 
--define(SYS_POWER_USB, "/sys/class/power_supply/axp20x-usb").
--define(USB_PRESENT, filename:join(?SYS_POWER_USB, "present")).
+-define(SYS_POWER_USB, "/sys/class/power_supply/AC").
+-define(AC_ONLINE, filename:join(?SYS_POWER_USB, "online")).
 
 -define(SAMPLE_INTERVAL, 1000).
 
@@ -120,6 +123,12 @@ message_handler(State=#state{parent=Parent}) ->
 				  soc=SOC1, soc0=SOC0}}
     end.
 
+soc() ->
+    Vmin = read_voltage_min(),
+    Vmax = read_voltage_max(),
+    V0 = read_voltage(),
+    parse_voltage_level(V0,Vmin,Vmax).
+
 parse_voltage_level(V, Vmin, Vmax) when Vmin < Vmax ->
     V1 = max(V, Vmin),
     V2 = min(V1, Vmax),
@@ -134,7 +143,7 @@ is_battery_charging() ->
     end.
 
 is_power_connected() ->
-    case file:read_file(?USB_PRESENT) of
+    case file:read_file(?AC_ONLINE) of
 	{ok,<<"1\n">>} -> true;
 	{ok,<<"0\n">>} -> false;
 	_ -> error
@@ -143,7 +152,7 @@ is_power_connected() ->
 read_voltage_min() ->
     read_voltage(?VOLTAGE_MIN).
 read_voltage_max() ->
-    read_voltage(?VOLTAGE_MAX).
+    ?VOLTAGE_MAX_VALUE / 1000000.
 
 read_voltage() ->
     read_voltage(?VOLTAGE_NOW).
