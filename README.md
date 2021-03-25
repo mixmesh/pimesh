@@ -120,3 +120,23 @@ First part (used part) of the pin header
 	8  - RESET     13   (GPIO 27)
 	9  - COL9      -
 	10 - GND       9    (GND)
+
+## MixMesh keyboard dimensions
+
+Circuit board thickness 0.95 mm
+width: 27.97 mm
+height: 46.01 mm
+
+Button height: 1.35mm (pressed) 1.5mm (release)
+Platsic cover: 1.4mm?
+Height at tca8418: 1.8mm
+
+
+Component sizes:
+
+	S1,..., S12  radius 3,550      (buttons)
+	C1,C2
+	R1, ..., R41   w=1.520, h=0.850  (resistors)
+	D1, ..., D7    w=0.850, h=1.520  (LED)
+	D8             w=3.200, h=1.200  (2-LED)
+	IC1            w=3.500, h=3.500  (TCA8418)
