@@ -141,10 +141,9 @@ Component sizes:
 	D8             w=3.200, h=1.200  (2-LED)
 	IC1            w=3.500, h=3.500  (TCA8418)
 
-	Connector: w=
-	  pin1 x=11.500, y=15.170
-	  pin2 x=11.500, y=13.900
-	  pin9 x=16.580, y=15.170
-	  pin9 x=16.580, y=13.900 
-
-	
+	Pin header: w=6.16, h=3.58  (hole in the lid)
+	Connector:  w=10.73, h=3.10 (probably not used)
+	  pin1  x=11.500, y=15.170
+	  pin2  x=11.500, y=13.900
+	  pin9  x=16.580, y=15.170
+	  pin10 x=16.580, y=13.900
