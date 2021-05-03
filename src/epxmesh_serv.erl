@@ -39,8 +39,8 @@
 -define(LABEL_FONT_SIZE, 20).
 
 %% default lock code keys
--define(KEY_Asterisk, 31).
--define(KEY_Number,   33).
+-define(KEY_Asterisk, $?).
+-define(KEY_Number,   $#).
 
 -define(BLINK_ON_TMO, 500).
 -define(BLINK_OFF_TMO, 1000).
@@ -79,11 +79,11 @@
 	 parent,
 	 tca8418,
 	 locked = true,
-	 %% pincode = "123456",    %% digest? 
-	 pincode = "4567",
-	 pincode_len = 4,       %% needed for digest!? and missing enter key
-	 pincode_enter_key,     %% accept without enter key
-	 %% pincode_enter_key = ?KEY_Number,  %% must enter with '#' after code
+	 pincode = "456789",    %% digest? 
+	 %% pincode = "4567",
+	 pincode_len = 6,       %% needed for digest!? and missing enter key
+	 %% pincode_enter_key,     %% accept without enter key
+	 pincode_enter_key = ?KEY_Number,  %% must enter with '#' after code
 	 prev_key,  %% keep last key PRESSED! clear on release
 	 pincode_lock_key1 = ?KEY_Asterisk,
 	 pincode_lock_key2 = ?KEY_Number,
@@ -207,7 +207,7 @@ message_handler(State=#state{parent=Parent}) ->
 	{epx_event, Win, close} when Win =:= State#state.window ->
 	    epx:pixmap_detach(State#state.screen),
 	    epx:window_detach(State#state.window),
-	    ok;
+	    stop;
 
 	{epx_event, Win, {button_press, [left|_], Where}} when 
 	      Win =:= State#state.window ->
@@ -304,7 +304,7 @@ message_handler(State=#state{parent=Parent}) ->
         {system, From, Request} ->
             {system, From, Request};
         UnknownMessage ->
-            ?error_log({unknown_message, UnknownMessage}),
+            io:format("unknown_message: ~p\n", [UnknownMessage]),
             noreply
     end.
 
@@ -621,10 +621,11 @@ scan_events([{press,Key}|Es], State) ->
     State1 = add_key(Key, State),
     scan_events(Es, State1#state { prev_key = Key} );
 scan_events([{release,Key}|Es], State) ->
-    io:format("RELEASE ~s\n", [[Key]]),
+    io:format("RELEASE ~s [~w]\n", [[Key],Key]),
     State1 = 
 	if State#state.locked ->
 		set_led(State#state.tca8418, off),
+		io:format("enter_key = ~w\n", [State#state.pincode_enter_key]),
 		case State#state.pincode_enter_key of
 		    undefined -> check_pincode(State, false);
 		    Key -> check_pincode(State, true);

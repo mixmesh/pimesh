@@ -88,11 +88,11 @@
 	 parent,
 	 tca8418,
 	 locked = true,
-	 %% pincode = "123456",    %% digest? 
-	 pincode = "4567",
-	 pincode_len = 4,       %% needed for digest!? and missing enter key
-	 pincode_enter_key,     %% accept without enter key
-	 %% pincode_enter_key = ?KEY_Number,  %% must enter with '#' after code
+	 pincode = "456789",    %% digest? 
+	 %% pincode = "4567",
+	 pincode_len = 6,       %% needed for digest!? and missing enter key
+	 %% pincode_enter_key,     %% accept without enter key
+	 pincode_enter_key = ?KEY_Number,  %% must enter with '#' after code
 	 prev_key,  %% keep last key PRESSED! clear on release
 	 pincode_lock_key1 = ?KEY_Asterisk,
 	 pincode_lock_key2 = ?KEY_Number,
