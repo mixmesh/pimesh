@@ -16,6 +16,15 @@ difference() {
                lid_slot_floor_thickness])
         cube([lid_slot_width, lid_slot_height,
               lid_slot_depth*2]);
+    // Film glue frame
+    translate([(lid_width-(lid_slot_width+                 
+                           lid_film_glue_frame_width*2))/2,
+               (lid_height-(lid_slot_height+
+                            lid_film_glue_frame_width*2))/2,
+               lid_thickness-lid_film_thickness])
+        cube([lid_slot_width+lid_film_glue_frame_width*2,
+              lid_slot_height+lid_film_glue_frame_width*2,
+              lid_film_thickness+0.001]);
     // Hole
     translate([lid_width/2-lid_slot_hole_width/2,
                (lid_height-lid_slot_height)/2+lid_slot_hole_y,
