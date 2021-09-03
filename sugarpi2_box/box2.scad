@@ -4,11 +4,11 @@ include <globals.scad>
 $fa=1;
 $fs=0.4;
 
-collector_hole_width=25;
-collector_hole_height=13;
+collector_hole_width=23;
+collector_hole_height=11;
 collector_hole_y=box_wall_thickness+box_circuit_padding+
                 pizero_first_micro_usb_y;
-collector_hole_z=15;
+collector_hole_z=17;
 
 // Box
 difference() {
@@ -34,7 +34,7 @@ difference() {
               collector_hole_height]); 
 }
 
-nut_case_wall_thickness=0.75;
+nut_case_wall_thickness=1;
 nut_case_width=box_nut_width+nut_case_wall_thickness*2;
 nut_case_height=box_circuit_padding+lid_screw_padding+
                 box_nut_width/2;
@@ -123,7 +123,7 @@ module nutCase(x,y,z,up=true) {
                          h=nut_case_thickness*2);
             // Nut case hole
             translate([x+(nut_case_width-box_nut_width)/2,
-                       y+(nut_case_height-box_nut_width/2),
+                       y+(nut_case_height-box_nut_width),
                        z+(nut_case_thickness-
                           box_nut_thickness)/2])
                cube([box_nut_width,box_nut_width,
