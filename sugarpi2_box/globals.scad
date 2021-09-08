@@ -22,7 +22,7 @@ box_outer_width=box_inner_width+box_wall_thickness*2;
 box_outer_height=box_inner_height+box_wall_thickness*2;
 box_outer_depth=box_inner_depth+box_wall_thickness;
 box_corner_radius=3;
-box_nut_tolerance=0.5;
+box_nut_tolerance=0.25;
 box_nut_width=5+box_nut_tolerance;
 box_nut_thickness=2+box_nut_tolerance;
 

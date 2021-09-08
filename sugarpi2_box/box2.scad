@@ -36,8 +36,14 @@ difference() {
 
 nut_case_wall_thickness=1;
 nut_case_width=box_nut_width+nut_case_wall_thickness*2;
-nut_case_height=box_circuit_padding+lid_screw_padding+
+nut_case_height=lid_screw_padding+
                 box_nut_width/2;
+
+echo("box_circuit_padding=",box_circuit_padding);
+echo("lid_screw_padding=",lid_screw_padding);
+echo("nut_case_height",nut_case_height);
+echo("box_nut_width/2=", box_nut_width/2);
+
 nut_case_thickness=box_nut_thickness+
                    nut_case_wall_thickness*2;
 nut_case_z=16;
