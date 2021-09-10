@@ -2,7 +2,7 @@
 pizero_width = 30;
 pizero_height = 65;
 pizero_screw_padding=3.5;
-pizero_first_micro_usb_y=34;
+pizero_first_micro_usb_y=35;
 
 // Keyboard
 keyboard_circuit_width=27.97;
@@ -48,6 +48,8 @@ box_nut_thickness=2+box_nut_tolerance;
 lid_width=box_outer_width;
 lid_height=box_outer_height;
 lid_mask_thickness=0.5;
+lid_mask_pillars_thickness=1.3;
+lid_mask_pillars_radius=1;
 lid_film_thickness=0.75;
 lid_film_glue_frame_width=2;
 lid_slot_padding=0.5;
@@ -55,6 +57,7 @@ lid_slot_width=keyboard_circuit_width+lid_slot_padding;
 lid_slot_height=keyboard_circuit_height+lid_slot_padding;
 lid_slot_depth=keyboard_circuit_thickness+
                keyboard_tca8418_thickness+
+               lid_mask_pillars_thickness+
                lid_mask_thickness+
                lid_film_thickness;
 lid_slot_floor_thickness=0.5;

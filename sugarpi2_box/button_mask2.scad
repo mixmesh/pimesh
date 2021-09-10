@@ -96,5 +96,6 @@ module pillar_row(y, is_there) {
 module pillar(x,y) {
     translate([keyboard_circuit_width-x,y,
                lid_mask_thickness-0.001])
-        cylinder(h=1.05,r=0.75);
+        cylinder(h=lid_mask_pillars_thickness,
+                 r=lid_mask_pillars_radius);
 }
