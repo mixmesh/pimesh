@@ -131,6 +131,12 @@ Button height: 1.35mm (pressed) 1.5mm (release)
 Platsic cover: 1.4mm?
 Height at tca8418: 1.8mm
 
+Plastic cover dimensions (mm)
+  Glue frame width: 2
+  Width: 2 + 28.47 + 2 = 32.47
+  Height: 2 + 46.51 + 2 = 50.51
+
+Led hole radius: 1mm
 
 Component sizes:
 
