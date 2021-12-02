@@ -26,9 +26,9 @@ difference() {
               lid_slot_height+lid_film_glue_frame_width*2,
               lid_film_thickness+0.001]);
     
-    echo("W: ",  lid_slot_width+lid_film_glue_frame_width*2);
-    echo("H: ",  lid_slot_height+lid_film_glue_frame_width*2);
-    echo("T: ",  lid_film_thickness);    
+    echo("Hålets vidd (exklusive limmram): ", lid_slot_width, "mm");
+    echo("Hålets höjd (exklusive limmram): ", lid_slot_height, "mm");
+    echo("Limmramen på varje sida: ", lid_film_glue_frame_width, "mm");
     
     // Hole
     translate([lid_width/2-lid_slot_hole_width/2,
